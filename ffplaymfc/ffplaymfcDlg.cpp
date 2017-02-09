@@ -38,37 +38,19 @@ public:
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
-	virtual BOOL OnInitDialog();
+
 // 实现
 protected:
 	DECLARE_MESSAGE_MAP()
-public:
-	CEdit m_editconfig;
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
 {
-
-}
-
-BOOL CAboutDlg::OnInitDialog()
-{
-	CDialogEx::OnInitDialog();
-	CString configinfo;
-#ifdef _UNICODE
-	USES_CONVERSION;
-	configinfo.Format(_T("%s"),A2W(avformat_configuration()));
-#else
-	configinfo.Format(_T("%s"),avformat_configuration());
-#endif
-	m_editconfig.SetWindowText(configinfo);
-	return TRUE;
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_EDIT_CONFIG, m_editconfig);
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
@@ -150,8 +132,6 @@ BEGIN_MESSAGE_MAP(CffplaymfcDlg, CDialogEx)
 	ON_WM_HSCROLL()
 	ON_COMMAND(ID_WEBSITE, &CffplaymfcDlg::OnWebsite)
 	ON_COMMAND(IDCANCEL, &CffplaymfcDlg::OnIdcancel)
-	ON_COMMAND(ID_WINDOWSTRETCH_KEEPRATIO, &CffplaymfcDlg::OnWindowstretchKeepratio)
-	ON_COMMAND(ID_WINDOWSTRETCH_RESIZE, &CffplaymfcDlg::OnWindowstretchResize)
 END_MESSAGE_MAP()
 
 UINT Thread_Play(LPVOID lpParam){
@@ -633,16 +613,4 @@ void CffplaymfcDlg::OnIdcancel()
 		FreeSubWindow();
 		CDialogEx::OnCancel();
 	}
-}
-
-
-void CffplaymfcDlg::OnWindowstretchKeepratio()
-{
-	ffmfc_stretch(0);
-}
-
-
-void CffplaymfcDlg::OnWindowstretchResize()
-{
-	ffmfc_stretch(1);
 }

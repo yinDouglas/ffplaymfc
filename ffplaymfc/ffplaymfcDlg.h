@@ -116,6 +116,4 @@ public:
 	afx_msg void OnIdcancel();
 
 
-	afx_msg void OnWindowstretchKeepratio();
-	afx_msg void OnWindowstretchResize();
 };

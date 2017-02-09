@@ -117,5 +117,3 @@ int ffmfc_reset_index();
 //²¥·Å½ø¶È
 //Seek Bar
 void ffmfc_seek_bar(int pos);
-//Stretch
-void ffmfc_stretch(int stretch);

@@ -93,13 +93,14 @@ typedef struct PacketQueue {
 #define SUBPICTURE_QUEUE_SIZE 4
 
 
-long  rint(double x)
+/**long  rint(double x)
 {
+
 	if(x >= 0.)
 		return (long)(x + 0.5);
 	else
 		return (long)(x - 0.5);
-}
+}**/
 
 typedef struct VideoPicture {
 	double pts;                                  ///< presentation time stamp for this picture
@@ -321,9 +322,7 @@ int seek_bar_pos;
 //专门设置的标记，在程序将要退出的时候会置1
 static int exit_remark=0;
 
-//是否拉伸-------------------------
-#define FFMFC_STRETCH_EVENT (SDL_USEREVENT + 5)
-int is_stretch=1;
+
 //---------------------------------
 static SDL_Surface *screen;
 
@@ -1039,15 +1038,6 @@ static void calculate_display_rect(SDL_Rect *rect, int scr_xleft, int scr_ytop, 
 	rect->h = FFMAX(height, 1);
 }
 
-//计算显示窗口的位置（保持填充屏幕）
-static void calculate_display_rect_f(SDL_Rect *rect, int scr_xleft, int scr_ytop, int scr_width, int scr_height, VideoPicture *vp)
-{
-	rect->x = scr_xleft;
-	rect->y = scr_ytop;
-	rect->w =scr_width;
-	rect->h = scr_height;
-}
-
 static void video_image_display(VideoState *is)
 {
 	VideoPicture *vp;
@@ -1081,12 +1071,9 @@ static void video_image_display(VideoState *is)
 				}
 			}
 		}
-		//计算显示窗的位置（两种方法）
-		if(is_stretch==0){
-			calculate_display_rect(&rect, is->xleft, is->ytop, is->width, is->height, vp);
-		}else if(is_stretch==1){
-			calculate_display_rect_f(&rect, is->xleft, is->ytop, is->width, is->height, vp);
-		}
+
+		calculate_display_rect(&rect, is->xleft, is->ytop, is->width, is->height, vp);
+
 		SDL_DisplayYUVOverlay(vp->bmp, &rect);
 	}
 }
@@ -1687,6 +1674,7 @@ display:
 			av_diff = 0;
 			if (is->audio_st && is->video_st)
 				av_diff = get_audio_clock(is) - get_video_clock(is);
+			/*
 			printf("%7.2f A-V:%7.3f fd=%4d aq=%5dKB vq=%5dKB sq=%5dB f=%"PRId64"/%"PRId64"   \r",
 				get_master_clock(is),
 				av_diff,
@@ -1696,6 +1684,7 @@ display:
 				sqsize,
 				is->video_st ? is->video_st->codec->pts_correction_num_faulty_dts : 0,
 				is->video_st ? is->video_st->codec->pts_correction_num_faulty_pts : 0);
+				*/
 			//输出时间信息（时间轴）-----------------
 			int pos=1000*get_master_clock(is)/(is->ic->duration/1000000);
 			dlg->m_playprogress.SetPos(pos);
@@ -3362,16 +3351,6 @@ static void toggle_audio_display(VideoState *is,int mode)
 	SDL_UpdateRect(screen, is->xleft, is->ytop, is->width, is->height);
 }
 
-//Stretch
-void ffmfc_stretch(int stretch){
-	SDL_Event event;
-	event.type = FFMFC_STRETCH_EVENT;
-	SDL_PushEvent(&event);
-
-	is_stretch=stretch;
-}
-
-
 /* handle an event sent by the GUI */
 //处理各种鼠标键盘命令,包括各种事件
 static void event_loop(VideoState *cur_stream)
@@ -3401,7 +3380,6 @@ static void event_loop(VideoState *cur_stream)
 			case SDLK_ESCAPE:
 			case SDLK_q:
 				do_exit(cur_stream);
-				dlg->OnBnClickedStop();
 				break;
 			case SDLK_f:
 				//全屏
@@ -3524,23 +3502,16 @@ do_seek:
 				stream_seek(cur_stream, ts, 0, 0);
 			}
 			break;
-		case SDL_VIDEORESIZE:{
+		case SDL_VIDEORESIZE:
 			screen = SDL_SetVideoMode(event.resize.w, event.resize.h, 0,
 				SDL_HWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_HWACCEL);
 			screen_width  = cur_stream->width  = event.resize.w;
 			screen_height = cur_stream->height = event.resize.h;
-			//刷新--------------------
-			int bgcolor = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
-			fill_rectangle(screen,cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height,bgcolor);
-			SDL_UpdateRect(screen, cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height);
-			//--
 			cur_stream->force_refresh = 1;
 			break;
-			}
 		case SDL_QUIT:
 		case FF_QUIT_EVENT:
 			do_exit(cur_stream);
-			dlg->OnBnClickedStop();
 			break;
 		case FF_ALLOC_EVENT:
 			alloc_picture((VideoState *)(event.user.data1));
@@ -3563,14 +3534,7 @@ do_seek:
 			}
 			break;
 							   }
-		case FFMFC_STRETCH_EVENT:{
-			//刷新--------------------
-			int bgcolor = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
-			fill_rectangle(screen,cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height,bgcolor);
-			SDL_UpdateRect(screen, cur_stream->xleft, cur_stream->ytop, cur_stream->width, cur_stream->height);
-			//--
-			break;
-							  }
+
 		default:
 			break;
 		}
@@ -3868,7 +3832,7 @@ int ffmfc_play(LPVOID lpParam)
 	}
 
 	if (!display_disable) {
-#if HAVE_SDL_VIDEO_SIZE
+#if HAFFMFC_SDL_VIDEO_SIZE
 		const SDL_VideoInfo *vi = SDL_GetVideoInfo();
 		fs_screen_width = vi->current_w;
 		fs_screen_height = vi->current_h;
@@ -3895,7 +3859,6 @@ int ffmfc_play(LPVOID lpParam)
 
 	g_is = is;
 
-	autoexit=1;
 	//const char *info=(char *)malloc(500);
 	//info=avformat_configuration();
 
